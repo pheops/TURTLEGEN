@@ -9,6 +9,7 @@ import { GLTFLoader } from 'https://cdn.skypack.dev/three@0.132.2/examples/jsm/l
 import { DRACOLoader } from 'https://cdn.skypack.dev/three@0.132.2/examples/jsm/loaders/DRACOLoader.js';
 import { RGBELoader } from 'https://cdn.skypack.dev/three@0.132.2/examples/jsm/loaders/RGBELoader.js';
 import { GLTFExporter } from 'https://cdn.skypack.dev/three@0.132.2/examples/jsm/exporters/GLTFExporter.js';
+import { USDZExporter } from 'https://cdn.skypack.dev/three@0.132.2/examples/jsm/exporters/USDZExporter.js';
 
 let width = window.innerWidth
 let height = window.innerWidth
@@ -23,7 +24,8 @@ let controls;
 var metal = 0;
 var rough = 0;
 var envMap ;
-let turtleMesh;
+var turtleMesh;
+var textureEquirec
 
 const params = {
   metalness: 0.0,
@@ -35,15 +37,15 @@ const params = {
 
 
 
-var hexbuttons = document.getElementsByClassName("hexButton");
-// console.log(hexbuttons)
-for (let i = 0; i < hexbuttons.length; i++) {
-  hexbuttons[i].addEventListener("click", onHexButtonClick, false);
-};
+// var hexbuttons = document.getElementsByClassName("hexButton");
+// // console.log(hexbuttons)
+// for (let i = 0; i < hexbuttons.length; i++) {
+//   hexbuttons[i].addEventListener("click", onHexButtonClick, false);
+// };
 
-function onHexButtonClick(event) {
-  console.log(event.target.id);
-}
+// function onHexButtonClick(event) {
+//   console.log(event.target.id);
+// }
 
 
 
@@ -63,6 +65,11 @@ function onButtonClick(event) {
         console.log("yp")
      download();
      }
+
+  if (event.target.id == "ar"){
+     //console.log("AR")
+     downloadAR();
+     }
 }
 
 
@@ -77,6 +84,31 @@ function download() {
     { binary: true }
   );
 }
+
+async function downloadAR() {
+    //console.log(scene.children[0])
+    const exporter = new USDZExporter();
+    const arraybuffer = await exporter.parse( scene.children[0]);
+    console.log(arraybuffer);
+    //const blob = new Blob( [ arraybuffer ], { type: 'application/octet-stream' } );
+    saveArrayBuffer(arraybuffer, 'scene.usdz')
+    
+  
+}
+
+
+
+
+//         const arraybuffer = exporter.parse( scene.children[0]);
+//         const blob = new Blob( [ arraybuffer ], { type: 'application/octet-stream' } );
+//         //console.log(arraybuffer)
+//         saveArrayBuffer(arraybuffer, arfile.usdz)
+
+// }
+
+
+
+
 
 function saveArrayBuffer(buffer, filename) {
   save(new Blob([buffer], { type: 'application/octet-stream' }), filename);
@@ -128,7 +160,7 @@ function init() {
         const aspect = window.innerWidth / window.innerHeight;
         camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 0.1, 1000 );
          //camera.position.set(-8,.5,0);
-        camera.position.z = 7;
+        camera.position.z = 5;
 
         controls = new OrbitControls( camera, container );
         controls.target.set( .5, 0.5, 0 );
@@ -149,127 +181,125 @@ function init() {
         //scene.add( grid );
 
         //hdr
-        new RGBELoader()
+        // new RGBELoader()
          
-          .load( "./assets/quarry_2k.hdr", function ( texture ) {
+        //   .load( "./assets/quarry_2k.hdr", function ( texture ) {
           
-          var enviro = pmremGenerator.fromEquirectangular( texture ).texture;
+        //   var enviro = pmremGenerator.fromEquirectangular( texture ).texture;
 
-          //scene.background = enviro;
-          scene.environment = enviro;
-         ivoryMaterial.envMap = enviro;
-         // ivoryMaterial.envMapIntensity
+        //   //scene.background = enviro;
+        //   scene.environment = enviro;
+        //   //ivoryMaterial.envMap = enviro;
+        //  // ivoryMaterial.envMapIntensity
 
-          })
+        //   })
 
+const textureLoader = new THREE.TextureLoader();
 
+        textureEquirec = textureLoader.load( './assets/2294472375_24a3b8ef46_o.jpg' );
+        textureEquirec.mapping = THREE.EquirectangularReflectionMapping;
+        textureEquirec.encoding = THREE.sRGBEncoding;
 
-
-
-
-        // materials
-
-        const bodyMaterial = new THREE.MeshPhysicalMaterial( {
-          color: 0xff0000, metalness: 1, roughness: 0.2, clearcoat: 0.05, clearcoatRoughness: 0.05
-        } );
+        scene.environment = textureEquirec;
 
 
-var colorPicker = new iro.ColorPicker("#picker", {
-  // Set the size of the color picker
-  width: 190,
-  // Set the initial color to pure red
-  color: "#ffffff"
-});
-
-var hex = colorPicker.color.hexString;
-console.log(hex); // hex = "#ff0000"
-
-// listen to a color picker's color:change event
-// color:change callbacks receive the current color
-colorPicker.on('color:change', function(color) {
-  // log the current color as a HEX string
-  //console.log(color.hexString);
-  ivoryMaterial.color.set( color.hexString );
-});
-
-        //old picker
-        // var color_picker_wrapper = document.getElementById("color-picker-wrapper");
-        // const bodyColorInput = document.getElementById( 'body-color' );
-        //     bodyColorInput.addEventListener( 'input', function () {
-        //     // color_picker_wrapper.style.backgroundColor.set( this.value );
-        //     bodyMaterial.color.set( this.value );
-        //     ivoryMaterial.color.set( this.value );
-
-        // } );
-
- 
-var metalSlider = document.getElementById("metalRange");
-var output = document.getElementById("demo");
-//output.innerHTML = metalSlider.value;
-
-metalSlider.oninput = function() {
-  //output.innerHTML = this.value;
-  //console.log(slider.value)
-   var metal = metalSlider.value/100;
-   params.metalness = metal;
-   console.log(params.metalness)
-   ivoryMaterial.metalness =  params.metalness ;
-     
-}
-
-var roughSlider = document.getElementById("roughRange");
-var output2 = document.getElementById("demo2");
-//output2.innerHTML = roughSlider.value;
-
-roughSlider.oninput = function() {
-  //output2.innerHTML = this.value;
-  //console.log(slider.value)
-   var rough = roughSlider.value/100;
-   params.roughness = rough;
-   console.log(params.roughness)
-   ivoryMaterial.roughness =  params.roughness ;
-     
-}
-
-var envSlider = document.getElementById("envRange");
-var output3 = document.getElementById("demo3");
-output3.innerHTML = envSlider.value;
-
-envSlider.oninput = function() {
-  output3.innerHTML = this.value;
-  //console.log(slider.value)
-   var envInt = envSlider.value/50;
-   params.exposure = envInt;
-   console.log(params.exposure)
-   //ivoryMaterial.roughness =  params.roughness ;
-    
-}
 
 
-        
-        // const jadeTexture = new THREE.TextureLoader().load( './assets/jade_color.png' );
-        // jadeTexture.flipY=false
-        //const jadeMaterial = new THREE.MeshStandardMaterial( { map: jadeTexture, roughness: roughMap, } );
+      //MATERIALS
 
-
-        const ivoryTexture = new THREE.TextureLoader().load( './assets/ivorycombined4.png' );
-        ivoryTexture.flipY=false
-        //ivoryTexture.needsUpdate = true;
-
-        
-
-        const nMap = new THREE.TextureLoader().load( './assets/normal.bmp' );
-        // const roughMap = new THREE.TextureLoader().load( './assets/ivorybake3_rough.png' );
-        // const colorMap = new THREE.TextureLoader().load( './assets/ivorybake3_color.png' );
-       
-
-      // immediately use the texture for material creation
-        let ivoryMaterial = new THREE.MeshStandardMaterial( { 
+  let ivoryMaterial = new THREE.MeshStandardMaterial( { 
               //map: ivoryTexture,
               //metalness: metal,
               //normalMap: nMap,
          
              } );
+
+      var colorPicker = new iro.ColorPicker("#picker", {
+      // Set the size of the color picker
+      width: 190,
+      // Set the initial color to WHITE
+      color: "#ffffff"
+      });
+
+      var hex = colorPicker.color.hexString;
+      //console.log(hex); // hex = "#ff0000"
+
+      // listen to a color picker's color:change event
+      // color:change callbacks receive the current color
+      colorPicker.on('color:change', function(color) {
+      // log the current color as a HEX string
+      //console.log(color.hexString);
+      ivoryMaterial.color.set( color.hexString );
+      });
+
+
+      var metalSlider = document.getElementById("metalRange");
+      var output = document.getElementById("demo");
+      //output.innerHTML = metalSlider.value;
+
+      metalSlider.oninput = function() {
+        //output.innerHTML = this.value;
+        //console.log(slider.value)
+         var metal = metalSlider.value/100;
+         params.metalness = metal;
+         console.log(params.metalness)
+         ivoryMaterial.metalness =  params.metalness ;
+           
+      }
+
+      var roughSlider = document.getElementById("roughRange");
+      var output2 = document.getElementById("demo2");
+      //output2.innerHTML = roughSlider.value;
+
+      roughSlider.oninput = function() {
+        //output2.innerHTML = this.value;
+        //console.log(slider.value)
+         var rough = roughSlider.value/100;
+         params.roughness = rough;
+         //console.log(params.roughness)
+         ivoryMaterial.roughness =  params.roughness ;
+           
+      }
+
+      var envSlider = document.getElementById("envRange");
+      var output3 = document.getElementById("demo3");
+      output3.innerHTML = envSlider.value;
+
+      envSlider.oninput = function() {
+        output3.innerHTML = this.value;
+        //console.log(slider.value)
+         var envInt = envSlider.value/50;
+         params.exposure = envInt;
+         //console.log(params.exposure)
+         //ivoryMaterial.roughness =  params.roughness ;
+          
+      }
+
+
+      //TEXTURES
+
+      // const jadeTexture = new THREE.TextureLoader().load( './assets/jade_color.png' );
+      // jadeTexture.flipY=false
+      //const jadeMaterial = new THREE.MeshStandardMaterial( { map: jadeTexture, roughness: roughMap, } );
+
+
+      //const ivoryTexture = new THREE.TextureLoader().load( './assets/ivorycombined4.png' );
+      //ivoryTexture.flipY=false
+      //ivoryTexture.needsUpdate = true;
+
+      
+      //const nMap = new THREE.TextureLoader().load( './assets/normal.bmp' );
+      // const roughMap = new THREE.TextureLoader().load( './assets/ivorybake3_rough.png' );
+      // const colorMap = new THREE.TextureLoader().load( './assets/ivorybake3_color.png' );
+       
+
+      // immediately use the texture for material creation
+        // let ivoryMaterial = new THREE.MeshStandardMaterial( { 
+        //       //map: ivoryTexture,
+        //       //metalness: metal,
+        //       //normalMap: nMap,
+         
+        //      } );
 
        
 
@@ -286,13 +316,16 @@ envSlider.oninput = function() {
         loader.setDRACOLoader( dracoLoader );
         loader.load( './assets/smallturtle-normal.glb', function ( gtlf ) {
 
-           const fullmodel = gtlf.scene//.children[0].children[0].geometry//.children[0].geometry;
+           //const fullmodel = gtlf.scene//.children[0].children[0].geometry//.children[0].geometry;
            const model = gtlf.scene.children[0].geometry//.children[0].geometry;
-           console.log(model)
+           //console.log(model)
            let turtleMesh = new THREE.Mesh( model, ivoryMaterial );
            turtleMesh.name = 'turtle';
            turtleMesh.position.y = -.5
+           turtleMesh.rotation.y = Math.PI / 4;
            scene.add( turtleMesh );
+
+
 
 
          
