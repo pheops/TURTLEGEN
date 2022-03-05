@@ -116,50 +116,9 @@ text-align:center;
 transition: all 0.15s;
 }
 
-.HUDmain {
-  width: 190px;
-  display:flex;
-  margin:  10px;
-  --s: 50px;  /* size  */
-  --r: 1;      /* ratio */
-  
-  /* clip-path parameter */
-  --hc: 25px; 
-  --vc: 10px;
-  
-
-  --m:2px;    /* vertical margin */
-  --m-h: calc(var(--m) + (var(--s) - 2*var(--hc))/2); /* horizontal margin */
-  --f: calc(2*var(--s) + 4*var(--m) - 2*var(--vc) - 2px);
-}
-.HUDcontainer {
-  font-size: 0; /* disable white space between inline block element */
-}
-.HUDcontainer div {
-  width: var(--s);
-  margin: var(--m) var(--m-h);
-  height: calc(var(--s)*var(--r));
-  display: inline-block;
-  font-size:initial;
-  background:white;
-  clip-path: polygon(var(--hc) 0, calc(100% - var(--hc)) 0,100% var(--vc),100% calc(100% - var(--vc)), calc(100% - var(--hc)) 100%,var(--hc) 100%,0 calc(100% - var(--vc)),0 var(--vc));
-  margin-bottom: calc(var(--m) - var(--vc));
 
 
-}
-.HUDcontainer div:nth-child(odd) {
-  background:white;
-}
-.HUDcontainer::before {
-  content: "";
-  width: calc(var(--s)/2 + var(--m-h));
-  float: left;
-  height: 135%; 
-  shape-outside: repeating-linear-gradient(#0000 0 calc(var(--f) - 3px),#000 0 var(--f));
-
-}
-
-/*SLIDER DIALS*/
+/* ---------slider dials-------------------------------- */
 
 .dial-container {
   padding-top: 10px;
@@ -326,6 +285,205 @@ transition: all 0.15s;
   height: 30px;
   opacity: 0;
 }
+
+
+
+
+
+
+
+/* ---------hexbuttons-------------------------------- */
+
+
+
+.hexbuttons {
+  display: block;
+  margin-top: 20px ;
+  width: 200px;
+  text-align: center;
+}
+
+#hex span.green + br + #hex span.blue {
+  margin-left: -4px;
+}
+
+#hex span {
+  box-sizing: border-box;
+  position: relative;
+  display: inline-block;
+  width: 59px;
+  height: 35px;
+  margin: 6px 1px;
+  border-radius: 9.5px;
+  border-left: 6px solid #28282a;
+  border-right: 6px solid #28282a;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03), inset 0 0 0 0 rgba(0, 0, 0, 0.7);
+  cursor: pointer;
+  transition: all 0.25s ease-in-out;
+  -webkit-transition: all 0.25s ease-in-out;
+}
+
+#hex span:hover {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03), inset 0 0 7px -1px rgba(0, 0, 0, 0.7);
+}
+
+#hex span:before,
+#hex span:after {
+  box-sizing: border-box;
+  position: absolute;
+  display: block;
+  content: "";
+  width: 35px;
+  height: 35px;
+  transform: rotate(45deg) skew(-13deg, -13deg);
+  border-radius: 9.5px;
+  transition: all 0.25s ease-in-out;
+  -webkit-transition: all 0.25s ease-in-out;
+}
+
+#hex span:before {
+  top: -14px;
+  left: 6px;
+  border-top: 6px solid #28282a;
+  border-left: 6px solid #28282a;
+  box-shadow: -1px -1px 0 0 rgba(255, 255, 255, 0.03), inset 0 0 0 -4px rgba(0, 0, 0, 0.7);
+}
+
+#hex span:hover:before {
+  box-shadow: -1px -1px 0 0 rgba(255, 255, 255, 0.03), inset 4px 4px 7px -4px rgba(0, 0, 0, 0.7);
+}
+
+#hex span:after {
+  bottom: -14px;
+  left: 6px;
+  border-bottom: 6px solid #28282a;
+  border-right: 6px solid #28282a;
+  box-shadow: 1px 1px 0 0 rgba(255, 255, 255, 0.03), inset 0 0 0 -4px rgba(0, 0, 0, 0.7);
+}
+
+#hex span:hover:after {
+  box-shadow: -1px -1px 0 0 rgba(255, 255, 255, 0.03), inset -4px -4px 7px -4px rgba(0, 0, 0, 0.7);
+}
+
+#hex span.red {
+  background: #e1443f;
+}
+
+#hex span.blue {
+  background: #4490c1;
+}
+
+#hex span.green {
+  background: #1db79b;
+}
+
+#hex span.red:before,
+#hex span.red:after {
+  background: #e1443f;
+}
+
+#hex span.blue:before,
+#hex span.blue:after {
+  background: #4490c1;
+}
+
+#hex span.green:before,
+#hex span.green:after {
+  background: #1db79b;
+}
+
+
+/* ---------loading screen-------------------------------- */
+
+
+#loading-screen {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #000000;
+  opacity: 1;
+  transition: 1s opacity;
+}
+
+#loading-screen.fade-out {
+    opacity: 0;
+}
+
+#loader {
+    display: block;
+    position: relative;
+    left: 50%;
+    top: 50%;
+    width: 150px;
+    height: 150px;
+    margin: -75px 0 0 -75px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    border-top-color: #9370DB;
+    -webkit-animation: spin 2s linear infinite;
+    animation: spin 2s linear infinite;
+}
+#loader:before {
+    content: "";
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    right: 5px;
+    bottom: 5px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    border-top-color: #BA55D3;
+    -webkit-animation: spin 3s linear infinite;
+    animation: spin 3s linear infinite;
+}
+#loader:after {
+    content: "";
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    right: 15px;
+    bottom: 15px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    border-top-color: #FF00FF;
+    -webkit-animation: spin 1.5s linear infinite;
+    animation: spin 1.5s linear infinite;
+}
+@-webkit-keyframes spin {
+    0%   {
+        -webkit-transform: rotate(0deg);
+        -ms-transform: rotate(0deg);
+        transform: rotate(0deg);
+    }
+    100% {
+        -webkit-transform: rotate(360deg);
+        -ms-transform: rotate(360deg);
+        transform: rotate(360deg);
+    }
+}
+@keyframes spin {
+    0%   {
+        -webkit-transform: rotate(0deg);
+        -ms-transform: rotate(0deg);
+        transform: rotate(0deg);
+    }
+    100% {
+        -webkit-transform: rotate(360deg);
+        -ms-transform: rotate(360deg);
+        transform: rotate(360deg);
+    }
+}
+
+
+
+
+
+
+
+
 /*#app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -370,7 +528,7 @@ transition: all 0.15s;
 
 /*old sliders*/
 
-
+/*
 
 old
 #demo {
@@ -466,4 +624,4 @@ how to remove the virtical space around the range input in IE*/
     margin: 0;
     /*Edge starts the margin from the thumb, not the track as other browsers do*/
   }
-}
+}*/

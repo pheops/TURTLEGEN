@@ -17,121 +17,33 @@ let height = window.innerWidth
 
 let offset;
 
-let camera, scene, renderer;
+let camera, scene, renderer, mesh, mixer, clock;
 
 let grid;
 let controls;
 var metal = 0;
 var rough = 0;
 var envMap ;
-var turtleMesh;
-var textureEquirec
+let turtleMesh;
+var textureEquirec;
+var skyEquirec;
+
+
+let pngCubeRenderTarget, exrCubeRenderTarget;
+      let pngBackground, exrBackground;
 
 const params = {
-  metalness: 0.0,
-  roughness:0.0,
+  metalness: 0.5,
+  roughness:0.5,
   exposure: 1.0, 
 
 }
 
 
-
-
-// var hexbuttons = document.getElementsByClassName("hexButton");
-// // console.log(hexbuttons)
-// for (let i = 0; i < hexbuttons.length; i++) {
-//   hexbuttons[i].addEventListener("click", onHexButtonClick, false);
-// };
-
-// function onHexButtonClick(event) {
-//   console.log(event.target.id);
-// }
-
-
-
-
-
-var buttons = document.getElementsByTagName("button");
-
-for (let i = 0; i < buttons.length; i++) {
-  buttons[i].addEventListener("click", onButtonClick, false);
-};
-
-
-function onButtonClick(event) {
-  alert(event.target.id);
-
-  if (event.target.id == "download"){
-        console.log("yp")
-     download();
-     }
-
-  if (event.target.id == "ar"){
-     //console.log("AR")
-     downloadAR();
-     }
-}
-
-
-function download() {
-  const exporter = new GLTFExporter();
-  exporter.parse(
-    scene,
-    function (result) {
-      console.log(result)
-      saveArrayBuffer(result, 'scene.glb');
-    },
-    { binary: true }
-  );
-}
-
-async function downloadAR() {
-    //console.log(scene.children[0])
-    const exporter = new USDZExporter();
-    const arraybuffer = await exporter.parse( scene.children[0]);
-    console.log(arraybuffer);
-    //const blob = new Blob( [ arraybuffer ], { type: 'application/octet-stream' } );
-    saveArrayBuffer(arraybuffer, 'scene.usdz')
-    
-  
-}
-
-
-
-
-//         const arraybuffer = exporter.parse( scene.children[0]);
-//         const blob = new Blob( [ arraybuffer ], { type: 'application/octet-stream' } );
-//         //console.log(arraybuffer)
-//         saveArrayBuffer(arraybuffer, arfile.usdz)
-
-// }
-
-
-
-
-
-function saveArrayBuffer(buffer, filename) {
-  save(new Blob([buffer], { type: 'application/octet-stream' }), filename);
-}
-
-const link = document.createElement('a');
-link.style.display = 'none';
-document.body.appendChild(link); // Firefox workaround, see #6594
-
-function save(blob, filename) {
-  link.href = URL.createObjectURL(blob);
-  link.download = filename;
-  link.click();
-
-  // URL.revokeObjectURL( url ); breaks Firefox...
-}
-
-
-
-
       init();
       animate();
      
+
 
 
 function init() {
@@ -147,16 +59,12 @@ function init() {
         //renderer.setAnimationLoop( render );
         renderer.outputEncoding = THREE.sRGBEncoding;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure = 0.5;
+        renderer.toneMappingExposure = 1.0;
         container.appendChild( renderer.domElement );
 
 
         window.addEventListener( 'resize', onWindowResize );
 
-        // stats = new Stats();
-        // container.appendChild( stats.dom );
-
-        //
         const aspect = window.innerWidth / window.innerHeight;
         camera = new THREE.PerspectiveCamera( 40, window.innerWidth / window.innerHeight, 0.1, 1000 );
          //camera.position.set(-8,.5,0);
@@ -169,50 +77,166 @@ function init() {
         const pmremGenerator = new THREE.PMREMGenerator( renderer );
 
         scene = new THREE.Scene();
-        //scene.background = new THREE.Color( 0xeeeeee );
+        //scene.background = new THREE.Color( 0x383434);
         //scene.environment = pmremGenerator.fromScene( new RoomEnvironment() ).texture;
         //scene.fog = new THREE.Fog( 0xeeeeee, 10, 50 );
 
-        grid = new THREE.GridHelper( 100, 40, 0xffffff, 0xffffff );
-        grid.position.y = -.7;
-        grid.material.opacity = 0.1;
-        grid.material.depthWrite = false;
-        grid.material.transparent = true;
-        //scene.add( grid );
+        // grid = new THREE.GridHelper( 100, 40, 0xffffff, 0xffffff );
+        //grid = new THREE.PolarGridHelper( 5, 5, 5, 64 )
+        //grid.position.y = -.5;
+        //grid.position.x = .3;
+             //grid.position.x = -.7;
+             // grid.material.opacity = 0.1;
+             // grid.material.depthWrite = false;
+             // grid.material.transparent = true;
+             //scene.add( grid );
 
-        //hdr
-        // new RGBELoader()
-         
-        //   .load( "./assets/quarry_2k.hdr", function ( texture ) {
-          
-        //   var enviro = pmremGenerator.fromEquirectangular( texture ).texture;
 
-        //   //scene.background = enviro;
-        //   scene.environment = enviro;
-        //   //ivoryMaterial.envMap = enviro;
-        //  // ivoryMaterial.envMapIntensity
+////LOADING SCREEN
 
-        //   })
+  clock = new THREE.Clock();
+  
+  const loadingManager = new THREE.LoadingManager( () => {
+  
+    const loadingScreen = document.getElementById( 'loading-screen' );
+    loadingScreen.classList.add( 'fade-out' );
+    
+    // optional: remove loader from DOM via event listener
+    loadingScreen.addEventListener( 'transitionend', onTransitionEnd );
+    
+  } );
 
-const textureLoader = new THREE.TextureLoader();
 
-        textureEquirec = textureLoader.load( './assets/2294472375_24a3b8ef46_o.jpg' );
+////ENVIRONMENT
+
+const environLoader = new THREE.TextureLoader(loadingManager );
+
+        textureEquirec = environLoader.load( './assets/drackenstein_quarry.jpg' );
         textureEquirec.mapping = THREE.EquirectangularReflectionMapping;
         textureEquirec.encoding = THREE.sRGBEncoding;
 
         scene.environment = textureEquirec;
 
+const skyLoader = new THREE.TextureLoader(loadingManager );
+
+        skyEquirec = skyLoader.load( './assets/sky2.png' );
+        skyEquirec.mapping = THREE.EquirectangularReflectionMapping;
+        skyEquirec.encoding = THREE.sRGBEncoding;
+
+        scene.background = skyEquirec;
 
 
+////MATERIALS
 
-      //MATERIALS
+const loader = new THREE.TextureLoader(loadingManager);
+    
+    const texture1 = loader.load( './assets/IVORYBAKE.png' );
+     texture1.flipY=false
+    const rough1 = loader.load( './assets/TDROUGH.png' );
+     rough1.flipY=false 
+    const normal1 = loader.load( './assets/NORMAL.png' );
+     normal1.flipY=false 
 
-  let ivoryMaterial = new THREE.MeshStandardMaterial( { 
-              //map: ivoryTexture,
-              //metalness: metal,
-              //normalMap: nMap,
-         
-             } );
+    const texture2 = loader.load( './assets/STONECOLOR.png' );
+     texture2.flipY=false
+    const rough2 = loader.load( './assets/STONEROUGH.png' );
+     rough2.flipY=false 
+    const normal2 = loader.load( './assets/STONENORM.png' );
+     normal2.flipY=false  
+
+    const texture3 = loader.load( './assets/SCRATCHCOLOR.png' );
+     texture3.flipY=false
+    const rough3 = loader.load( './assets/SCRATCHROUGH.png' );
+     rough3.flipY=false 
+    const normal3 = loader.load( './assets/SCRATCHNORMAL.png' );
+     normal3.flipY=false 
+
+    const texture4 = loader.load( './assets/TDCOLOR.png' );
+     texture4.flipY=false
+    const rough4 = loader.load( './assets/TDROUGH.png' );
+     rough4.flipY=false 
+    const normal4 = loader.load( './assets/TDNORMAL.png' );
+     normal4.flipY=false  
+
+
+    const material = new THREE.MeshStandardMaterial( 
+      { map: texture1, 
+        roughnessMap: rough1,
+        normalMap: normal1,
+
+
+       } );
+
+
+////TEXTURE HEX BUTTONS
+
+var hexbuttons = document.getElementsByClassName("hexbuttons"); 
+
+//console.log(hexbuttons) 
+
+for (let i = 0; i < hexbuttons.length; i++) {
+  hexbuttons[i].addEventListener("click", onButtonClick, false);
+};
+
+var buttons = document.getElementsByTagName("button");
+
+for (let i = 0; i < buttons.length; i++) {
+  buttons[i].addEventListener("click", onButtonClick, false);
+};
+
+
+function onButtonClick(event) {
+ 
+
+  if (event.target.id == "download"){
+     alert("Download GTLF");
+     download();
+     }
+
+  if (event.target.id == "ar"){
+     alert("Download USDZ");
+     downloadAR();
+     }
+
+  if (event.target.id == "1"){
+
+     material.map = texture1;
+     material.roughnessMap = rough1;
+     material.normalMap = normal1;
+      //texture1.dispose();
+
+
+     }
+     
+  if (event.target.id == "2"){
+
+     material.map = texture2;
+     material.roughnessMap = rough2;
+     material.normalMap = normal2;
+  
+     } 
+
+  if (event.target.id == "3"){
+
+     material.map = texture3;
+      material.roughnessMap = rough3;
+     material.normalMap = normal3;
+  
+     } 
+
+  if (event.target.id == "4"){
+
+     material.map = texture4;
+      material.roughnessMap = rough4;
+     material.normalMap = normal4;
+  
+     }      
+
+
+}
+
+
+////COOR PICKER AND METAL/ROUGH SLIDERS
 
       var colorPicker = new iro.ColorPicker("#picker", {
       // Set the size of the color picker
@@ -229,7 +253,8 @@ const textureLoader = new THREE.TextureLoader();
       colorPicker.on('color:change', function(color) {
       // log the current color as a HEX string
       //console.log(color.hexString);
-      ivoryMaterial.color.set( color.hexString );
+  
+       material.color.set( color.hexString );
       });
 
 
@@ -242,8 +267,7 @@ const textureLoader = new THREE.TextureLoader();
         //console.log(slider.value)
          var metal = metalSlider.value/100;
          params.metalness = metal;
-         console.log(params.metalness)
-         ivoryMaterial.metalness =  params.metalness ;
+         material.metalness =  params.metalness ;
            
       }
 
@@ -256,87 +280,54 @@ const textureLoader = new THREE.TextureLoader();
         //console.log(slider.value)
          var rough = roughSlider.value/100;
          params.roughness = rough;
-         //console.log(params.roughness)
-         ivoryMaterial.roughness =  params.roughness ;
+         material.roughness =  params.roughness ;
            
       }
 
-      var envSlider = document.getElementById("envRange");
-      var output3 = document.getElementById("demo3");
-      output3.innerHTML = envSlider.value;
+      // var envSlider = document.getElementById("envRange");
+      // var output3 = document.getElementById("demo3");
+      // output3.innerHTML = envSlider.value;
 
-      envSlider.oninput = function() {
-        output3.innerHTML = this.value;
-        //console.log(slider.value)
-         var envInt = envSlider.value/50;
-         params.exposure = envInt;
-         //console.log(params.exposure)
-         //ivoryMaterial.roughness =  params.roughness ;
+      // envSlider.oninput = function() {
+      //   output3.innerHTML = this.value;
+      //   //console.log(slider.value)
+      //    var envInt = envSlider.value/50;
+      //    params.exposure = envInt;
+      //    //console.log(params.exposure)
+      //    //ivoryMaterial.roughness =  params.roughness ;
           
-      }
-
-
-      //TEXTURES
-
-      // const jadeTexture = new THREE.TextureLoader().load( './assets/jade_color.png' );
-      // jadeTexture.flipY=false
-      //const jadeMaterial = new THREE.MeshStandardMaterial( { map: jadeTexture, roughness: roughMap, } );
-
-
-      //const ivoryTexture = new THREE.TextureLoader().load( './assets/ivorycombined4.png' );
-      //ivoryTexture.flipY=false
-      //ivoryTexture.needsUpdate = true;
-
-      
-      //const nMap = new THREE.TextureLoader().load( './assets/normal.bmp' );
-      // const roughMap = new THREE.TextureLoader().load( './assets/ivorybake3_rough.png' );
-      // const colorMap = new THREE.TextureLoader().load( './assets/ivorybake3_color.png' );
-       
-
-      // immediately use the texture for material creation
-        // let ivoryMaterial = new THREE.MeshStandardMaterial( { 
-        //       //map: ivoryTexture,
-        //       //metalness: metal,
-        //       //normalMap: nMap,
-         
-        //      } );
-
-       
+      // }
 
 
 
+  //// TURTLE MODEL LOADER
 
-      // TURTLE MODEL LOADER
-
-        const dracoLoader = new DRACOLoader();
+        const dracoLoader = new DRACOLoader(loadingManager );
         dracoLoader.setDecoderPath( 'js/libs/draco/gltf/' );
 
 
-        const loader = new GLTFLoader();
-        loader.setDRACOLoader( dracoLoader );
-        loader.load( './assets/smallturtle-normal.glb', function ( gtlf ) {
+        const modelLoader = new GLTFLoader(loadingManager );
+        modelLoader.setDRACOLoader( dracoLoader );
+        modelLoader.load( './assets/smallturtle-normal.glb', function ( gtlf ) {
 
            //const fullmodel = gtlf.scene//.children[0].children[0].geometry//.children[0].geometry;
            const model = gtlf.scene.children[0].geometry//.children[0].geometry;
            //console.log(model)
-           let turtleMesh = new THREE.Mesh( model, ivoryMaterial );
-           turtleMesh.name = 'turtle';
+           let turtleMesh = new THREE.Mesh( model, material );
            turtleMesh.position.y = -.5
            turtleMesh.rotation.y = Math.PI / 4;
            scene.add( turtleMesh );
-
-
-
-
-         
-
-
 
         } );
 
 
 
-        // lights
+
+
+
+
+
+////LIGHTS
 
         // const ambientLight = new THREE.AmbientLight( 0x404040, .1);
         // scene.add( ambientLight );
@@ -359,10 +350,57 @@ const textureLoader = new THREE.TextureLoader();
 
 ////////////////////////////////////////////////////////////////////////
 
+function onTransitionEnd( event ) {
+
+  event.target.remove();
+  
+}
 
 
 
-        
+function download() {
+  const exporter = new GLTFExporter();
+  exporter.parse(
+    scene,
+    function (result) {
+      console.log(result)
+      saveArrayBuffer(result, 'scene.glb');
+    },
+    { binary: true }
+  );
+}
+
+async function downloadAR() {
+    //console.log(scene.children[0])
+    const exporter = new USDZExporter();
+    const arraybuffer = await exporter.parse( scene.children[0]);
+    //console.log(arraybuffer);
+    //const blob = new Blob( [ arraybuffer ], { type: 'application/octet-stream' } );
+    saveArrayBuffer(arraybuffer, 'scene.usdz')
+    
+  
+}
+
+
+
+
+
+function saveArrayBuffer(buffer, filename) {
+  save(new Blob([buffer], { type: 'application/octet-stream' }), filename);
+}
+
+const link = document.createElement('a');
+link.style.display = 'none';
+document.body.appendChild(link); // Firefox workaround, see #6594
+
+function save(blob, filename) {
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+
+  // URL.revokeObjectURL( url ); breaks Firefox...
+}
+  
 
 
 
@@ -405,6 +443,12 @@ function onWindowResize() {
         renderer.setSize( width, height );
 
       }
+
+
+
+
+
+
 
 ///DIALS
 function updateDonut(percent, element){
